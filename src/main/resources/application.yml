@@ -1,0 +1,33 @@
+server:
+  port: 8081
+
+
+spring:
+  application:
+       name: Smart Depo
+
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/DepoDb
+    username: postgres
+    password: 16260
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+
+
+
+logging:
+  level:
+    org.springframework.security: TRACE
+    org.springframework.web: DEBUG
+    com.example.auth: DEBUG
