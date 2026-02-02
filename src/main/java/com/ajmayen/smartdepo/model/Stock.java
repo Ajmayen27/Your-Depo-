@@ -22,7 +22,7 @@ public class Stock {
     @JoinColumn(name = "product_id",unique = true,nullable = false)
     private Product product;
 
-    private Integer currentCartonQuantity = 0;
+    private Integer currentCartonQty = 0;
 
     private LocalDateTime updatedAt = LocalDateTime.now();
 
