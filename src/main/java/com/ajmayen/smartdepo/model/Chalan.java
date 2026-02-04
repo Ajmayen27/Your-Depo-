@@ -29,5 +29,10 @@ public class Chalan {
 
     private Double subTotal;
 
+    @OneToMany(
+            mappedBy = "chalan",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
     private List<ChalanItem> items = new ArrayList<>();
 }
