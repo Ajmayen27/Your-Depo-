@@ -35,4 +35,13 @@ public class Chalan {
             orphanRemoval = true
     )
     private List<ChalanItem> items = new ArrayList<>();
+
+    @ManyToOne
+    @JoinColumn(name = "dealer_id")
+    private Dealer dealer;
+
+    // Phase 3 Fields
+    private Double dealerDue;
+    private Double depoDue;
+
 }
