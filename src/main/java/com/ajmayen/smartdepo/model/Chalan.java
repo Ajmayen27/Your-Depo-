@@ -3,6 +3,7 @@ package com.ajmayen.smartdepo.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,8 +22,10 @@ public class Chalan {
 
     private String chalanNo;
 
+    private LocalDate chalanDate;
+
     @Enumerated(EnumType.STRING)
-    private ChalanType chalanType;
+    private ChalanType type;
 
     private Double subTotal;
 
