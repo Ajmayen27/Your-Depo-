@@ -12,6 +12,7 @@ import com.ajmayen.smartdepo.repository.StockRepository;
 import com.ajmayen.smartdepo.service.ChalanService;
 import com.ajmayen.smartdepo.service.DealerDepositService;
 import com.ajmayen.smartdepo.service.OutgoingChalanService;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -25,37 +26,45 @@ public class ChalanServiceImpl implements ChalanService {
     private final ProductRepository productRepository;
     private final DealerRepository dealerRepository;
     private final OutgoingChalanService outgoingService;
+    private final StockRepository stockRepository;
 
     public ChalanServiceImpl(
             ChalanRepository chalanRepository,
             ProductRepository productRepository,
             DealerRepository dealerRepository,
-            OutgoingChalanService outgoingService) {
+            OutgoingChalanService outgoingService, StockRepository stockRepository) {
         this.chalanRepository = chalanRepository;
         this.productRepository = productRepository;
         this.dealerRepository = dealerRepository;
         this.outgoingService = outgoingService;
+        this.stockRepository = stockRepository;
     }
+
+    private String generateChalanNo() {
+        int random = (int) (Math.random() * 100000);
+        return "CH-" + random;
+    }
+
 
     @Override
     @Transactional
     public ChalanResponse createChalan(ChalanRequest request) {
 
         Chalan chalan = Chalan.builder()
-                .chalanNo(request.getChalanNo())
+                .chalanNo(generateChalanNo())
                 .chalanDate(request.getChalanDate())
                 .type(request.getType())
                 .items(new ArrayList<>())
                 .subTotal(0.0)
                 .build();
 
-        double subTotal = 0;
+        double subTotal = 0.0;
 
         for (ChalanItemRequest itemReq : request.getItems()) {
 
             Product product = productRepository.findById(
                     itemReq.getProductId()
-            ).orElseThrow();
+            ).orElseThrow(()-> new EntityNotFoundException("Product not found"));
 
             double lineTotal =
                     product.getPricePerCarton() * itemReq.getCartonQty();
@@ -77,17 +86,40 @@ public class ChalanServiceImpl implements ChalanService {
         // OUTGOING only
         if (request.getType() == ChalanType.OUTGOING) {
 
+            if (request.getDealerId() == null) {
+                throw new RuntimeException("Dealer is required for outgoing chalan");
+            }
+
             Dealer dealer = dealerRepository
                     .findById(request.getDealerId())
-                    .orElseThrow();
+                    .orElseThrow(() -> new RuntimeException("Dealer not found"));
 
             chalan.setDealer(dealer);
 
             chalan = outgoingService.processOutgoingChalan(chalan);
+        }
 
-        } else {
+        // ============================
+        // INCOMING CHALAN
+        // ============================
+        else {
+
+            for (ChalanItem item : chalan.getItems()) {
+
+                Stock stock = stockRepository.findByProductId(
+                        item.getProduct().getId()
+                ).orElseThrow(() -> new RuntimeException("Stock not found"));
+
+                stock.setCurrentCartonQty(
+                        stock.getCurrentCartonQty() + item.getCartonQty()
+                );
+
+                stockRepository.save(stock);
+            }
+
             chalan = chalanRepository.save(chalan);
         }
+
 
         return mapToResponse(chalan);
     }

@@ -46,18 +46,32 @@ public class OutgoingChalanService {
             chalan.setDepoDue(0.0);
         }
 
-        // Deduct stock
+
+        // Deduct stock safely
         for (ChalanItem item : chalan.getItems()) {
+
             Stock stock = stockRepository.findByProductId(
                     item.getProduct().getId()
-            ).orElseThrow();
+            ).orElseThrow(() -> new RuntimeException("Product Stock Out"));
 
-            stock.setCurrentCartonQty(
-                    stock.getCurrentCartonQty() - item.getCartonQty()
-            );
+            int currentQty = stock.getCurrentCartonQty();
+            int requestedQty = item.getCartonQty();
+
+            // 🔥 VALIDATION
+            if (requestedQty > currentQty) {
+                throw new RuntimeException(
+                        "Not enough stock for product: "
+                                + item.getProduct().getName()
+                                + ". Available: " + currentQty
+                                + ", Requested: " + requestedQty
+                );
+            }
+
+            stock.setCurrentCartonQty(currentQty - requestedQty);
 
             stockRepository.save(stock);
         }
+
 
         return chalanRepository.save(chalan);
     }
