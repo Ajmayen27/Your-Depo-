@@ -15,29 +15,29 @@ public class OutgoingChalanService {
     private final StockRepository stockRepository;
     private final DealerDepositService depositService;
 
-    public OutgoingChalanService(ChalanRepository chalanRepository, StockRepository stockRepository, DealerDepositService depositService) {
+    public OutgoingChalanService(
+            ChalanRepository chalanRepository,
+            StockRepository stockRepository,
+            DealerDepositService depositService) {
         this.chalanRepository = chalanRepository;
         this.stockRepository = stockRepository;
         this.depositService = depositService;
     }
 
-    public Chalan createOutgoingChalan(Chalan chalan) {
+    public Chalan processOutgoingChalan(Chalan chalan) {
 
-        Dealer dealer = chalan.getDealer();
+        Long dealerId = chalan.getDealer().getId();
 
-        // 1. Total Deposit
-        Double totalDeposit = depositService.getTotalDeposit(dealer.getId());
+        double totalDeposit = depositService.getTotalDeposit(dealerId);
+        double currentTotal = chalan.getSubTotal();
 
-        // 2. Current Total
-        Double currentTotal = chalan.getSubTotal();
+        double previousDepoDue = chalanRepository
+                .findTopByDealerIdOrderByIdDesc(dealerId)
+                .map(c -> c.getDepoDue() == null ? 0.0 : c.getDepoDue())
+                .orElse(0.0);
 
-        // 3. Previous Depo Due (from last outgoing)
-        Double previousDepoDue = getLastDepoDue(dealer.getId());
+        double grandTotal = currentTotal + previousDepoDue;
 
-        // 4. Grand Total
-        Double grandTotal = currentTotal + previousDepoDue;
-
-        // 5. Apply Rule
         if (grandTotal > totalDeposit) {
             chalan.setDepoDue(grandTotal - totalDeposit);
             chalan.setDealerDue(0.0);
@@ -46,11 +46,11 @@ public class OutgoingChalanService {
             chalan.setDepoDue(0.0);
         }
 
-        // 6. Deduct Stock
+        // Deduct stock
         for (ChalanItem item : chalan.getItems()) {
-
-            Stock stock = stockRepository.findByProductId(item.getProduct().getId())
-                    .orElseThrow(() -> new RuntimeException("Stock not found"));
+            Stock stock = stockRepository.findByProductId(
+                    item.getProduct().getId()
+            ).orElseThrow();
 
             stock.setCurrentCartonQty(
                     stock.getCurrentCartonQty() - item.getCartonQty()
@@ -60,12 +60,5 @@ public class OutgoingChalanService {
         }
 
         return chalanRepository.save(chalan);
-    }
-
-    private Double getLastDepoDue(Long dealerId) {
-
-        return chalanRepository.findTopByDealerIdOrderByIdDesc(dealerId)
-                .map(Chalan::getDepoDue)
-                .orElse(0.0);
     }
 }

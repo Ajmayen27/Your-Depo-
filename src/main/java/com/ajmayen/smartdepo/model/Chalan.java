@@ -6,6 +6,7 @@ import lombok.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Entity
 @Table(name = "chalans")
@@ -29,19 +30,18 @@ public class Chalan {
 
     private Double subTotal;
 
+    @ManyToOne(optional = true)
+    private Dealer dealer;
+
+    private Double dealerDue;
+
+    private Double depoDue;
+
     @OneToMany(
             mappedBy = "chalan",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true
+            cascade = CascadeType.ALL
     )
     private List<ChalanItem> items = new ArrayList<>();
 
-    @ManyToOne
-    @JoinColumn(name = "dealer_id")
-    private Dealer dealer;
-
-    // Phase 3 Fields
-    private Double dealerDue;
-    private Double depoDue;
 
 }

@@ -6,9 +6,12 @@ import com.ajmayen.smartdepo.dto.ChalanRequest;
 import com.ajmayen.smartdepo.dto.ChalanResponse;
 import com.ajmayen.smartdepo.model.*;
 import com.ajmayen.smartdepo.repository.ChalanRepository;
+import com.ajmayen.smartdepo.repository.DealerRepository;
 import com.ajmayen.smartdepo.repository.ProductRepository;
 import com.ajmayen.smartdepo.repository.StockRepository;
 import com.ajmayen.smartdepo.service.ChalanService;
+import com.ajmayen.smartdepo.service.DealerDepositService;
+import com.ajmayen.smartdepo.service.OutgoingChalanService;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -20,103 +23,100 @@ public class ChalanServiceImpl implements ChalanService {
 
     private final ChalanRepository chalanRepository;
     private final ProductRepository productRepository;
-    private final StockRepository stockRepository;
+    private final DealerRepository dealerRepository;
+    private final OutgoingChalanService outgoingService;
 
-    public ChalanServiceImpl(ChalanRepository chalanRepository, ProductRepository productRepository, StockRepository stockRepository) {
+    public ChalanServiceImpl(
+            ChalanRepository chalanRepository,
+            ProductRepository productRepository,
+            DealerRepository dealerRepository,
+            OutgoingChalanService outgoingService) {
         this.chalanRepository = chalanRepository;
         this.productRepository = productRepository;
-        this.stockRepository = stockRepository;
+        this.dealerRepository = dealerRepository;
+        this.outgoingService = outgoingService;
     }
 
     @Override
     @Transactional
     public ChalanResponse createChalan(ChalanRequest request) {
 
-        // Step 1: Create Chalan Object
         Chalan chalan = Chalan.builder()
                 .chalanNo(request.getChalanNo())
                 .chalanDate(request.getChalanDate())
                 .type(request.getType())
-                .subTotal(0.0)
                 .items(new ArrayList<>())
+                .subTotal(0.0)
                 .build();
 
         double subTotal = 0;
-        List<ChalanItemResponse> responseItems = new ArrayList<>();
 
-        // Step 2: Process Items
         for (ChalanItemRequest itemReq : request.getItems()) {
 
-            Product product = productRepository.findById(itemReq.getProductId())
-                    .orElseThrow(() -> new RuntimeException("Product not found"));
+            Product product = productRepository.findById(
+                    itemReq.getProductId()
+            ).orElseThrow();
 
-            Stock stock = stockRepository.findByProductId(product.getId())
-                    .orElseThrow(() -> new RuntimeException("Stock not found"));
+            double lineTotal =
+                    product.getPricePerCarton() * itemReq.getCartonQty();
 
-            int qty = itemReq.getCartonQty();
-
-            // Step 3: Stock Update Logic
-            if (request.getType() == ChalanType.OUTGOING) {
-
-                // Validation
-                if (stock.getCurrentCartonQty() < qty) {
-                    throw new RuntimeException(
-                            "Not enough stock for product: " + product.getName()
-                    );
-                }
-
-                // Deduct stock
-                stock.setCurrentCartonQty(stock.getCurrentCartonQty() - qty);
-            }
-
-            if (request.getType() == ChalanType.INCOMING) {
-
-                // Add stock
-                stock.setCurrentCartonQty(stock.getCurrentCartonQty() + qty);
-            }
-
-            stockRepository.save(stock);
-
-            // Step 4: Price Calculation
-            double lineTotal = product.getPricePerCarton() * qty;
-            subTotal += lineTotal;
-
-            // Step 5: Save Item Entity
             ChalanItem item = ChalanItem.builder()
                     .chalan(chalan)
                     .product(product)
-                    .cartonQty(qty)
+                    .cartonQty(itemReq.getCartonQty())
                     .pricePerCarton(product.getPricePerCarton())
                     .totalPrice(lineTotal)
                     .build();
 
             chalan.getItems().add(item);
-
-            // Step 6: Build Response Item (Includes Pieces/Carton)
-            responseItems.add(
-                    ChalanItemResponse.builder()
-                            .productId(product.getId())
-                            .productName(product.getName())
-                            .perCartonPieces(product.getPerCartonPieces())
-                            .pricePerCarton(product.getPricePerCarton())
-                            .cartonQty(qty)
-                            .totalPrice(lineTotal)
-                            .build()
-            );
+            subTotal += lineTotal;
         }
 
-        // Step 7: Save Chalan
         chalan.setSubTotal(subTotal);
-        Chalan saved = chalanRepository.save(chalan);
 
-        // Step 8: Return Response DTO
+        // OUTGOING only
+        if (request.getType() == ChalanType.OUTGOING) {
+
+            Dealer dealer = dealerRepository
+                    .findById(request.getDealerId())
+                    .orElseThrow();
+
+            chalan.setDealer(dealer);
+
+            chalan = outgoingService.processOutgoingChalan(chalan);
+
+        } else {
+            chalan = chalanRepository.save(chalan);
+        }
+
+        return mapToResponse(chalan);
+    }
+
+    private ChalanResponse mapToResponse(Chalan chalan) {
+
+        List<ChalanItemResponse> items = chalan.getItems().stream()
+                .map(item -> ChalanItemResponse.builder()
+                        .productId(item.getProduct().getId())
+                        .productName(item.getProduct().getName())
+                        .cartonQty(item.getCartonQty())
+                        .perCartonPieces(item.getProduct().getPerCartonPieces())
+                        .pricePerCarton(item.getPricePerCarton())
+                        .totalPrice(item.getTotalPrice())
+                        .build())
+                .toList();
+
         return ChalanResponse.builder()
-                .id(saved.getId())
-                .chalanNo(saved.getChalanNo())
-                .chalanDate(saved.getChalanDate())
-                .type(saved.getType())
-                .subTotal(saved.getSubTotal())
-                .items(responseItems)
+                .id(chalan.getId())
+                .chalanNo(chalan.getChalanNo())
+                .chalanDate(chalan.getChalanDate())
+                .type(chalan.getType())
+                .subTotal(chalan.getSubTotal())
+                .dealerDue(chalan.getDealerDue())
+                .depoDue(chalan.getDepoDue())
+                .items(items)
                 .build();
     }
+
+
+
 }

@@ -5,5 +5,7 @@ import com.ajmayen.smartdepo.dto.ChalanResponse;
 
 public interface ChalanService {
 
-    ChalanResponse createChalan(ChalanRequest chalanRequest);
+    ChalanResponse createChalan(ChalanRequest request);
+
+
 }

@@ -9,10 +9,14 @@ import java.util.List;
 @Data
 public class ChalanRequest {
 
+    private Long dealerId;
+
     private String chalanNo;
     private LocalDate chalanDate;
 
     private ChalanType type;
 
     private List<ChalanItemRequest> items;
+
+
 }

@@ -7,4 +7,5 @@ public class ChalanItemRequest {
 
     private Long productId;
     private Integer cartonQty;
+    private Double pricePerCarton;
 }

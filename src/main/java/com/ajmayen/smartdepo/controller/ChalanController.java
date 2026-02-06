@@ -18,8 +18,13 @@ public class ChalanController {
         this.chalanService = chalanService;
     }
 
-    @PostMapping
-    public ChalanResponse createChalan(@RequestBody ChalanRequest request) {
+    @PostMapping("/incoming")
+    public ChalanResponse createIncoming(@RequestBody ChalanRequest request) {
+        return chalanService.createChalan(request);
+    }
+
+    @PostMapping("/outgoing")
+    public ChalanResponse createOutgoing(@RequestBody ChalanRequest request) {
         return chalanService.createChalan(request);
     }
 }

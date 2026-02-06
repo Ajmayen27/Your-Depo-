@@ -20,5 +20,9 @@ public class ChalanResponse {
 
     private Double subTotal;
 
+    private  Double dealerDue;
+
+    private Double depoDue;
+
     private List<ChalanItemResponse> items;
 }
