@@ -16,6 +16,8 @@ public class DealerDepositService {
     public Double getTotalDeposit(Long dealerId) {
 
         return depositRepository.findByDealerId(dealerId)
+
+                
                 .stream()
                 .mapToDouble(DealerDeposit::getAmount)
                 .sum();
