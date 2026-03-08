@@ -36,5 +36,4 @@ public class Product {
 
     private LocalDateTime createdAt = LocalDateTime.now();
 
-
 }

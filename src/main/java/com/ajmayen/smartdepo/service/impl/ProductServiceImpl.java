@@ -5,6 +5,7 @@ import com.ajmayen.smartdepo.model.Stock;
 import com.ajmayen.smartdepo.repository.ProductRepository;
 import com.ajmayen.smartdepo.repository.StockRepository;
 import com.ajmayen.smartdepo.service.ProductService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -39,6 +40,8 @@ public class ProductServiceImpl implements ProductService {
     public List<Product> getAllProducts() {
         return productRepository.findAll();
     }
+
+
 
 
 }

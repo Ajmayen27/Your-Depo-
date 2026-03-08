@@ -4,6 +4,8 @@ import com.ajmayen.smartdepo.model.DealerDeposit;
 import com.ajmayen.smartdepo.service.DealerDepositService;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/deposits")
 public class DealerDepositController {
@@ -19,8 +21,15 @@ public class DealerDepositController {
         return depositService.addDeposit(deposit);
     }
 
+    @GetMapping("/{dealerId}")
+    public List<DealerDeposit> getDealerDeposit(@PathVariable Long dealerId) {
+        return  depositService.getIndividualDeposit(dealerId);
+    }
+
+
     @GetMapping("/total/{dealerId}")
     public Double getTotal(@PathVariable Long dealerId) {
         return depositService.getTotalDeposit(dealerId);
     }
+
 }

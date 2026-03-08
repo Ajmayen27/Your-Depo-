@@ -90,13 +90,15 @@ public class ChalanServiceImpl implements ChalanService {
                 throw new RuntimeException("Dealer is required for outgoing chalan");
             }
 
-            Dealer dealer = dealerRepository
-                    .findById(request.getDealerId())
-                    .orElseThrow(() -> new RuntimeException("Dealer not found"));
+                Dealer dealer = dealerRepository
+                        .findById(request.getDealerId())
+                        .orElseThrow(() -> new RuntimeException("Dealer not found"));
 
-            chalan.setDealer(dealer);
+                chalan.setDealer(dealer);
 
-            chalan = outgoingService.processOutgoingChalan(chalan);
+                chalan = outgoingService.processOutgoingChalan(chalan);
+
+
         }
 
         // ============================
