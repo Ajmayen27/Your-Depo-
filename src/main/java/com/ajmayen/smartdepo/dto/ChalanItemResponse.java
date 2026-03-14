@@ -14,6 +14,7 @@ public class ChalanItemResponse {
 
     private Double pricePerCarton;
     private Integer cartonQty;
+    private Integer freeCartonQty;
 
     private Double totalPrice;
 }

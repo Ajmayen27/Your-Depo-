@@ -11,6 +11,7 @@ public class ChalanRequest {
 
     private Long dealerId;
 
+    private String trackNo;
     private String chalanNo;
     private LocalDate chalanDate;
 

@@ -21,6 +21,8 @@ public class Chalan {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
+    private String trackNo;
+
     private String chalanNo;
 
     private LocalDate chalanDate;
@@ -42,6 +44,5 @@ public class Chalan {
             cascade = CascadeType.ALL
     )
     private List<ChalanItem> items = new ArrayList<>();
-
 
 }

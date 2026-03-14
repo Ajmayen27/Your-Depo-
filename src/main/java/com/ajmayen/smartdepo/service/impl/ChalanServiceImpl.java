@@ -52,6 +52,7 @@ public class ChalanServiceImpl implements ChalanService {
 
         Chalan chalan = Chalan.builder()
                 .chalanNo(generateChalanNo())
+                .trackNo(request.getTrackNo())
                 .chalanDate(request.getChalanDate())
                 .type(request.getType())
                 .items(new ArrayList<>())
@@ -73,6 +74,7 @@ public class ChalanServiceImpl implements ChalanService {
                     .chalan(chalan)
                     .product(product)
                     .cartonQty(itemReq.getCartonQty())
+                    .freeCartonQty(itemReq.getFreeCartonQty())
                     .pricePerCarton(product.getPricePerCarton())
                     .totalPrice(lineTotal)
                     .build();
@@ -133,6 +135,7 @@ public class ChalanServiceImpl implements ChalanService {
                         .productId(item.getProduct().getId())
                         .productName(item.getProduct().getName())
                         .cartonQty(item.getCartonQty())
+                        .freeCartonQty(item.getFreeCartonQty())
                         .perCartonPieces(item.getProduct().getPerCartonPieces())
                         .pricePerCarton(item.getPricePerCarton())
                         .totalPrice(item.getTotalPrice())
@@ -141,6 +144,7 @@ public class ChalanServiceImpl implements ChalanService {
 
         return ChalanResponse.builder()
                 .id(chalan.getId())
+                .trackNo(chalan.getTrackNo())
                 .chalanNo(chalan.getChalanNo())
                 .chalanDate(chalan.getChalanDate())
                 .type(chalan.getType())

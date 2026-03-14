@@ -12,7 +12,8 @@ import java.util.List;
 public class ChalanResponse {
 
     private Long id;
-
+    
+    private String trackNo;
     private String chalanNo;
     private LocalDate chalanDate;
 

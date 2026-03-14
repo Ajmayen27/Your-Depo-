@@ -24,6 +24,7 @@ public class ChalanItem {
     private Product product;
 
     private Integer cartonQty;
+    private Integer freeCartonQty;
 
     private Double pricePerCarton;
 
